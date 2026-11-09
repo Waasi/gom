@@ -1,0 +1,10 @@
+package {{.Package}}
+
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+func ({{.Receiver}} *{{.Name}}) GetID() primitive.ObjectID   { return {{.Receiver}}.ID }
+func ({{.Receiver}} *{{.Name}}) SetID(id primitive.ObjectID) { {{.Receiver}}.ID = id }
+func ({{.Receiver}} *{{.Name}}) Bind(col *mongo.Collection)  { {{.Receiver}}.collection = col }

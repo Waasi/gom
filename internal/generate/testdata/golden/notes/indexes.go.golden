@@ -1,0 +1,9 @@
+package notes
+
+import (
+	"context"
+)
+
+func (m *NoteModel) EnsureIndexes(ctx context.Context) error {
+	return nil
+}

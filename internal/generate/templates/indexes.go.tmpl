@@ -1,0 +1,23 @@
+package {{.Package}}
+
+import (
+	"context"
+{{- if .Refs}}
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+{{- end}}
+)
+
+func (m *{{.Name}}Model) EnsureIndexes(ctx context.Context) error {
+{{- if .Refs}}
+	_, err := m.Collection().Indexes().CreateMany(ctx, []mongo.IndexModel{
+{{- range .Refs}}
+		{Keys: bson.D{ {Key: "{{.Key}}", Value: 1} }},
+{{- end}}
+	})
+	return err
+{{- else}}
+	return nil
+{{- end}}
+}

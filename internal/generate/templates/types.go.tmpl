@@ -1,0 +1,18 @@
+package {{.Package}}
+
+import (
+{{- range .TypesImports}}
+{{if .}}"{{.}}"{{end}}
+{{- end}}
+)
+
+type {{.Name}} struct {
+	ID primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+{{- range .Fields}}
+	{{.Name}} {{.Type}} {{.Tag}}
+{{- end}}
+	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt,omitempty"`
+
+	collection *mongo.Collection
+}

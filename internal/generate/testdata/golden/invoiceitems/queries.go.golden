@@ -1,0 +1,6 @@
+// Custom finders for InvoiceItem go here, e.g.:
+//
+//	func (m *InvoiceItemModel) FindByX(ctx context.Context, x string) (*InvoiceItem, error) {
+//		return m.FindOne(ctx, bson.M{"x": x})
+//	}
+package invoiceitems

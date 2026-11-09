@@ -1,0 +1,16 @@
+package invoiceitems
+
+import (
+	"github.com/waasi/gom/model"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+type InvoiceItemModel struct {
+	model.BaseModel[InvoiceItem, *InvoiceItem]
+}
+
+func New(db *mongo.Database) *InvoiceItemModel {
+	return &InvoiceItemModel{
+		BaseModel: model.New[InvoiceItem](db.Collection("invoiceItems")),
+	}
+}

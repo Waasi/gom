@@ -1,0 +1,11 @@
+package {{.Package}}
+
+import (
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+// New builds every model against db. `gom generate model` adds an entry here.
+func New(db *mongo.Database) *Models {
+	return &Models{
+	}
+}

@@ -1,0 +1,16 @@
+package {{.Package}}
+
+import (
+	"{{.ModelImport}}"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+type {{.Name}}Model struct {
+	model.BaseModel[{{.Name}}, *{{.Name}}]
+}
+
+func New(db *mongo.Database) *{{.Name}}Model {
+	return &{{.Name}}Model{
+		BaseModel: model.New[{{.Name}}](db.Collection("{{.Collection}}")),
+	}
+}

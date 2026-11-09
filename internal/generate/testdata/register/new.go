@@ -1,0 +1,14 @@
+package models
+
+import (
+	"example.com/app/models/contacts"
+	"example.com/app/models/tasks"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+func New(database *mongo.Database) *Models {
+	return &Models{
+		Contact: *contacts.New(database),
+		Task:    *tasks.New(database),
+	}
+}

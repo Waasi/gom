@@ -1,0 +1,12 @@
+package models
+
+import (
+	"example.com/app/models/invoices"
+	"example.com/app/models/persons"
+)
+
+// Models holds every model. `gom generate model` adds a field here.
+type Models struct {
+	Invoice invoices.InvoiceModel
+	Person  persons.PersonModel
+}

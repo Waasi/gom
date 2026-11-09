@@ -1,0 +1,23 @@
+package migrations
+
+import (
+	"context"
+
+	"github.com/waasi/gom/migrate"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+func init() {
+	migrate.Register(migrate.Migration{
+		Version: 20261108203600,
+		Name:    "backfill_invoice_totals",
+		Up: func(ctx context.Context, db *mongo.Database) error {
+			return nil
+		},
+		// Down undoes Up. Leave it nil if the change cannot be reversed;
+		// `gom migrate down` then refuses to roll past this migration.
+		Down: func(ctx context.Context, db *mongo.Database) error {
+			return nil
+		},
+	})
+}

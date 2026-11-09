@@ -1,0 +1,25 @@
+package invoiceitems
+
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+type InvoiceItem struct {
+	ID         primitive.ObjectID   `json:"id" bson:"_id,omitempty"`
+	Title      string               `json:"title" bson:"title" validate:"required"`
+	Total      int                  `json:"total" bson:"total"`
+	CompanyID  primitive.ObjectID   `json:"companyId" bson:"companyId"`
+	Notes      *string              `json:"notes" bson:"notes,omitempty"`
+	Tags       []string             `json:"tags" bson:"tags,omitempty"`
+	DueAt      *time.Time           `json:"dueAt" bson:"dueAt,omitempty"`
+	WatcherIDs []primitive.ObjectID `json:"watcherIds" bson:"watcherIds,omitempty"`
+	Metadata   map[string]any       `json:"metadata" bson:"metadata,omitempty"`
+	Amount     primitive.Decimal128 `json:"amount" bson:"amount"`
+	CreatedAt  time.Time            `json:"createdAt" bson:"createdAt"`
+	UpdatedAt  time.Time            `json:"updatedAt" bson:"updatedAt,omitempty"`
+
+	collection *mongo.Collection
+}

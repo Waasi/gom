@@ -1,0 +1,23 @@
+package {{.Package}}
+
+import (
+	"context"
+
+	"{{.Migrate}}"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+func init() {
+	migrate.Register(migrate.Migration{
+		Version: {{.Version}},
+		Name:    "{{.Name}}",
+		Up: func(ctx context.Context, db *mongo.Database) error {
+			return nil
+		},
+		// Down undoes Up. Leave it nil if the change cannot be reversed;
+		// `gom migrate down` then refuses to roll past this migration.
+		Down: func(ctx context.Context, db *mongo.Database) error {
+			return nil
+		},
+	})
+}

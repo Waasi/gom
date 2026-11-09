@@ -1,0 +1,14 @@
+// Command migrate runs this project's gom migrations:
+//
+//	go run ./{{.Dir}} up | down [n] | status
+//
+// or `gom migrate ...`. It connects with $MONGO_URI and $MONGO_DB.
+package main
+
+import (
+	"{{.Migrate}}"
+
+	_ "{{.Migrations}}"
+)
+
+func main() { migrate.Main() }

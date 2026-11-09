@@ -1,0 +1,12 @@
+package models
+
+import (
+	"example.com/app/models/contacts"
+	"example.com/app/models/tasks"
+)
+
+// Models is hand-written: gom must keep this comment and the layout.
+type Models struct {
+	Contact contacts.ContactModel
+	Task    tasks.TaskModel // trailing comment
+}

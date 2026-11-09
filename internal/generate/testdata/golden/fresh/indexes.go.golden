@@ -1,0 +1,15 @@
+package models
+
+import (
+	"context"
+	"errors"
+)
+
+// EnsureIndexes creates every model's indexes. `gom generate model` adds a
+// call here.
+func (m *Models) EnsureIndexes(ctx context.Context) error {
+	return errors.Join(
+		m.Invoice.EnsureIndexes(ctx),
+		m.Person.EnsureIndexes(ctx),
+	)
+}
