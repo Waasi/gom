@@ -110,11 +110,7 @@ func cmdModel(args []string) error {
 	if len(pos) == 0 {
 		return errUsage
 	}
-	fields, err := generate.ParseFields(pos[1:])
-	if err != nil {
-		return err
-	}
-	m, err := generate.NewModel(pos[0], *collection, fields)
+	m, err := generate.NewModel(pos[0], *collection, pos[1:])
 	if err != nil {
 		return err
 	}

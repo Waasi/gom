@@ -33,6 +33,8 @@ Field types:
   string text int int32 int64 float decimal bool time id map any
   ref        reference to another model: company:ref → CompanyID (bson "companyId"), indexed
   []type     slice, e.g. tags:[]string, members:[]ref
+  {...}      subdocument struct (quote it):   "address:{street:string!,city,zip:string?}"
+  []{...}    array of subdocuments:           "lines:[]{product:ref,qty:int!}"
   suffix ?   optional: pointer + omitempty      notes:text?
   suffix !   required: validate:"required"      title:string!
   A field with no type is a string.

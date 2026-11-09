@@ -33,44 +33,55 @@ type Model struct {
 }
 
 // NewModel derives every name from the user's input, which may be singular or
-// plural and in any case style ("invoice_item", "InvoiceItems").
-func NewModel(name, collection string, fields []Field) (*Model, error) {
+// plural and in any case style ("invoice_item", "InvoiceItems"), and parses
+// its field specs (see ParseFields).
+func NewModel(name, collection string, specs []string) (*Model, error) {
 	singular := inflect.Singularize(name)
 	typ := inflect.Pascal(singular)
-	if !isIdent(typ) || typ == "" {
+	if !isIdent(typ) {
 		return nil, fmt.Errorf("invalid model name %q", name)
+	}
+	fields, err := ParseFields(typ, specs)
+	if err != nil {
+		return nil, err
 	}
 	if collection == "" {
 		collection = inflect.Camel(inflect.Pluralize(singular))
 	}
-	return &Model{
+	m := &Model{
 		Name:       typ,
 		Package:    inflect.Lower(inflect.Pluralize(singular)),
 		Collection: collection,
 		Receiver:   strings.ToLower(typ[:1]),
 		Fields:     fields,
-	}, nil
+	}
+	// Subdocument types share the package with the model and its Model type.
+	taken := map[string]string{typ: "the model", typ + "Model": "the model's Model type"}
+	var clash error
+	walkStructs(fields, func(s *Struct) {
+		if what, ok := taken[s.Name]; ok && clash == nil {
+			clash = fmt.Errorf("subdocument type %s collides with %s; rename the field", s.Name, what)
+		}
+		taken[s.Name] = "another subdocument"
+	})
+	return m, clash
 }
 
-// Refs are the fields that get an index.
-func (m *Model) Refs() []Field {
-	var out []Field
-	for _, f := range m.Fields {
-		if f.Ref {
-			out = append(out, f)
-		}
-	}
+// Structs lists the subdocument types to declare, in declaration order.
+func (m *Model) Structs() []*Struct {
+	var out []*Struct
+	walkStructs(m.Fields, func(s *Struct) { out = append(out, s) })
 	return out
 }
+
+// Indexes are the dotted keys that get an index: every ref field, including
+// those inside subdocuments.
+func (m *Model) Indexes() []string { return refPaths(m.Fields, "") }
 
 // TypesImports lists the imports types.go needs.
 func (m *Model) TypesImports() []string {
 	set := map[string]bool{"time": true, pkgPrimitive: true, "go.mongodb.org/mongo-driver/mongo": true}
-	for _, f := range m.Fields {
-		for _, imp := range f.imports {
-			set[imp] = true
-		}
-	}
+	walkImports(m.Fields, set)
 	return sortedImports(set)
 }
 

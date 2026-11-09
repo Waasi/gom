@@ -35,14 +35,10 @@ func golden(t *testing.T, path string, got []byte) {
 }
 
 func TestModelGolden(t *testing.T) {
-	fields, err := ParseFields([]string{
+	m, err := NewModel("invoice_items", "", []string{
 		"title:string!", "total:int", "company:ref", "notes:text?",
 		"tags:[]string", "due_at:time?", "watchers:[]ref", "metadata:map", "amount:decimal",
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	m, err := NewModel("invoice_items", "", fields)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,6 +80,41 @@ func TestMigrationGolden(t *testing.T) {
 	golden(t, "migration.go.golden", src)
 }
 
+// Subdocuments: a typed struct per {...}, arrays of them validated with dive,
+// refs inside them indexed by dotted path.
+func TestSubdocumentGolden(t *testing.T) {
+	m, err := NewModel("order", "", []string{
+		"number:string!",
+		"address:{street:string!,city,zip:string?,geo:{lat:float,lng:float}}",
+		"billing:{name:string!,vat:string?}?",
+		"lines:[]{product:ref,qty:int!,price:decimal,options:[]{name,value}}!",
+		"notes:[]{body:text,at:time}",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, s := range m.Structs() {
+		names = append(names, s.Name)
+	}
+	want := "OrderAddress OrderAddressGeo OrderBilling OrderLine OrderLineOption OrderNote"
+	if strings.Join(names, " ") != want {
+		t.Fatalf("structs = %v, want %s", names, want)
+	}
+	if got := strings.Join(m.Indexes(), " "); got != "lines.productId" {
+		t.Fatalf("indexes = %s, want lines.productId", got)
+	}
+	files, err := m.Render()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range files {
+		if f.Name == "types.go" || f.Name == "indexes.go" {
+			golden(t, "orders/"+f.Name+".golden", f.Content)
+		}
+	}
+}
+
 func TestParseFieldsErrors(t *testing.T) {
 	for _, specs := range [][]string{
 		{"title:strin"},
@@ -92,10 +123,38 @@ func TestParseFieldsErrors(t *testing.T) {
 		{"title", "title:text"},
 		{"9lives:int"},
 		{"x:int?!"},
+		{"address:{}"},
+		{"address:{city:string"},
+		{"address:{city:string}}"},
+		{"address:{city,,zip}"},
+		{"address:{city:strin}"},
+		{"address:{city,city}"},
 	} {
-		if _, err := ParseFields(specs); err == nil {
+		if _, err := ParseFields("Order", specs); err == nil {
 			t.Errorf("ParseFields(%q) succeeded, want error", specs)
 		}
+	}
+	// Subdocuments may have their own id; only the model reserves it.
+	if _, err := ParseFields("Order", []string{"lines:[]{id:id,qty:int}"}); err != nil {
+		t.Errorf("id inside a subdocument: %v", err)
+	}
+}
+
+// The shell expands an unquoted address:{city:string,zip:string} into
+// address:city:string address:zip:string; say so instead of a bare type error.
+func TestShellExpandedBracesHint(t *testing.T) {
+	_, err := ParseFields("Order", []string{"address:city:string", "address:zip:string"})
+	if err == nil || !strings.Contains(err.Error(), "quote the argument") {
+		t.Fatalf("err = %v, want a hint about quoting", err)
+	}
+}
+
+func TestSubdocumentNameCollision(t *testing.T) {
+	if _, err := NewModel("order", "", []string{"line:{a}", "lines:[]{b}"}); err == nil {
+		t.Error("line and lines both produce OrderLine; want an error")
+	}
+	if _, err := NewModel("order", "", []string{"model:{a}"}); err == nil {
+		t.Error("model produces OrderModel, the model type itself; want an error")
 	}
 }
 
