@@ -1,0 +1,55 @@
+package orders
+
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+type Order struct {
+	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Number    string             `json:"number" bson:"number" validate:"required"`
+	Address   OrderAddress       `json:"address" bson:"address"`
+	Billing   *OrderBilling      `json:"billing" bson:"billing,omitempty"`
+	Lines     []OrderLine        `json:"lines" bson:"lines,omitempty" validate:"required,dive"`
+	Notes     []OrderNote        `json:"notes" bson:"notes,omitempty" validate:"omitempty,dive"`
+	CreatedAt time.Time          `json:"createdAt" bson:"createdAt"`
+	UpdatedAt time.Time          `json:"updatedAt" bson:"updatedAt,omitempty"`
+
+	collection *mongo.Collection
+}
+
+type OrderAddress struct {
+	Street string          `json:"street" bson:"street" validate:"required"`
+	City   string          `json:"city" bson:"city"`
+	Zip    *string         `json:"zip" bson:"zip,omitempty"`
+	Geo    OrderAddressGeo `json:"geo" bson:"geo"`
+}
+
+type OrderAddressGeo struct {
+	Lat float64 `json:"lat" bson:"lat"`
+	Lng float64 `json:"lng" bson:"lng"`
+}
+
+type OrderBilling struct {
+	Name string  `json:"name" bson:"name" validate:"required"`
+	Vat  *string `json:"vat" bson:"vat,omitempty"`
+}
+
+type OrderLine struct {
+	ProductID primitive.ObjectID   `json:"productId" bson:"productId"`
+	Qty       int                  `json:"qty" bson:"qty" validate:"required"`
+	Price     primitive.Decimal128 `json:"price" bson:"price"`
+	Options   []OrderLineOption    `json:"options" bson:"options,omitempty" validate:"omitempty,dive"`
+}
+
+type OrderLineOption struct {
+	Name  string `json:"name" bson:"name"`
+	Value string `json:"value" bson:"value"`
+}
+
+type OrderNote struct {
+	Body string    `json:"body" bson:"body"`
+	At   time.Time `json:"at" bson:"at"`
+}

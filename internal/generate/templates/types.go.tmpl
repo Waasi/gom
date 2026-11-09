@@ -16,3 +16,11 @@ type {{.Name}} struct {
 
 	collection *mongo.Collection
 }
+{{- range .Structs}}
+
+type {{.Name}} struct {
+{{- range .Fields}}
+	{{.Name}} {{.Type}} {{.Tag}}
+{{- end}}
+}
+{{- end}}

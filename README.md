@@ -76,8 +76,35 @@ page, err := m.Invoice.Find(ctx, bson.M{"companyId": id}, model.FindOptions{Page
 | `map`, `any`                                | `map[string]any`, `any`         |
 | `ref` (`company:ref`)                       | `CompanyID primitive.ObjectID`, bson `companyId`, indexed |
 | `[]type` (`tags:[]string`, `members:[]ref`) | slice                           |
+| `{...}` (`address:{street:string!,city}`)   | subdocument struct `InvoiceAddress` |
+| `[]{...}` (`lines:[]{product:ref,qty:int!}`) | `[]InvoiceLine`, each element validated |
 
 `?` makes a field optional (pointer + `omitempty`); `!` adds `validate:"required"`.
+
+### Subdocuments
+
+`{...}` declares a typed subdocument, generated as its own struct in `types.go` and
+named after the path to it: `address` on `Invoice` becomes `InvoiceAddress`, the
+elements of `lines` become `InvoiceLine`, and `geo` inside `address` becomes
+`InvoiceAddressGeo`. Inside the braces use the same field syntax, including nested
+`{...}`. **Quote the argument**, or the shell expands the braces:
+
+```sh
+gom g model Invoice title:string! \
+  "address:{street:string!,city,zip:string?,geo:{lat:float,lng:float}}" \
+  "billing:{name:string!,vat:string?}?" \
+  "lines:[]{product:ref,qty:int!,price:decimal}!"
+```
+
+Validation reaches into subdocuments: rules inside `address` are checked, and arrays of
+subdocuments get `dive` so every element is checked too. A `ref` inside a subdocument is
+indexed by its dotted path (`lines.productId`). Query and update them with ordinary
+MongoDB operators: `bson.M{"lines.qty": bson.M{"$gt": 4}}`, `$push`, `$elemMatch`,
+`"address.city"`.
+
+`UpdateByID` and `FindOneAndUpdate` accept `$set` / `$setOnInsert` as `bson.M`,
+`map[string]any` or `bson.D`, never modify the update you pass, and keep an
+`updatedAt`/`createdAt` you set yourself.
 Tags use [validator](https://github.com/go-playground/validator); register custom rules
 on `model.Validator`.
 
