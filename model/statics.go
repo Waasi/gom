@@ -122,13 +122,14 @@ func (b *BaseModel[T, PT]) Aggregate(ctx context.Context, pipeline mongo.Pipelin
 	return results, nil
 }
 
+// UpdateByID applies update to one document, setting updatedAt. $set may be
+// a bson.M, map[string]any or bson.D; update itself is not modified.
 func (b *BaseModel[T, PT]) UpdateByID(ctx context.Context, id primitive.ObjectID, update bson.M) error {
-	if update["$set"] != nil {
-		update["$set"].(bson.M)["updatedAt"] = time.Now()
-	} else {
-		update["$set"] = bson.M{"updatedAt": time.Now()}
+	stamped, err := withTimestamps(update, time.Now(), false)
+	if err != nil {
+		return err
 	}
-	_, err := b.collection.UpdateOne(ctx, bson.M{"_id": id}, update)
+	_, err = b.collection.UpdateOne(ctx, bson.M{"_id": id}, stamped)
 	return err
 }
 
@@ -142,17 +143,13 @@ func (b *BaseModel[T, PT]) DeleteOne(ctx context.Context, filter bson.M) error {
 	return err
 }
 
+// FindOneAndUpdate applies update and returns the document after it, setting
+// updatedAt, and createdAt when upsert inserts. $set and $setOnInsert may be a
+// bson.M, map[string]any or bson.D; update itself is not modified.
 func (b *BaseModel[T, PT]) FindOneAndUpdate(ctx context.Context, filter bson.M, update bson.M, upsert bool) (*T, error) {
-	if update["$set"] != nil {
-		update["$set"].(bson.M)["updatedAt"] = time.Now()
-	} else {
-		update["$set"] = bson.M{"updatedAt": time.Now()}
-	}
-	if upsert {
-		if update["$setOnInsert"] == nil {
-			update["$setOnInsert"] = bson.M{}
-		}
-		update["$setOnInsert"].(bson.M)["createdAt"] = time.Now()
+	update, err := withTimestamps(update, time.Now(), upsert)
+	if err != nil {
+		return nil, err
 	}
 
 	opts := options.FindOneAndUpdate().
@@ -160,7 +157,7 @@ func (b *BaseModel[T, PT]) FindOneAndUpdate(ctx context.Context, filter bson.M, 
 		SetUpsert(upsert)
 
 	var result T
-	err := b.collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&result)
+	err = b.collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
