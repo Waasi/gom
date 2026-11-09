@@ -85,6 +85,15 @@ func TestBaseModel(t *testing.T) {
 		t.Fatalf("UpdateByID: count %d, updatedAt %v (before %v)", got.Count, got.UpdatedAt, before)
 	}
 
+	// $set as bson.D used to panic on a type assertion.
+	if err := m.UpdateByID(ctx, w.ID, bson.M{"$set": bson.D{{Key: "count", Value: 10}}}); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = m.FindByID(ctx, w.ID)
+	if got.Count != 10 {
+		t.Fatalf("UpdateByID with bson.D: count = %d, want 10", got.Count)
+	}
+
 	up, err := m.FindOneAndUpdate(ctx, bson.M{"name": "c"}, bson.M{"$set": bson.M{"count": 3}}, true)
 	if err != nil || up.Name != "c" || up.CreatedAt.IsZero() {
 		t.Fatalf("FindOneAndUpdate upsert = %+v, %v", up, err)
